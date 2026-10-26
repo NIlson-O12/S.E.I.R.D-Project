@@ -1,7 +1,5 @@
 from django import forms
-
 from .models import ParametrosSimulacion
-
 
 class ParametrosSimulacionForm(forms.ModelForm):
     class Meta:
@@ -15,6 +13,15 @@ class ParametrosSimulacionForm(forms.ModelForm):
             "infectadosInicial",
             "tiempoSimulacion",
         ]
+        labels = {
+            "tasaInfeccion": "Tasa de Infección",
+            "tasaRecuperacion": "Tasa de Recuperación",
+            "tasaMortalidad": "Tasa de Mortalidad",
+            "duracionPromedioEnfermedad": "Duración Promedio de la Enfermedad (Días)",
+            "poblacionInicial": "Población Inicial",
+            "infectadosInicial": "Infectados Iniciales",
+            "tiempoSimulacion": "Tiempo de Simulación (Días)",
+        }
         widgets = {
             "tasaInfeccion": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0", "max": "1"}),
             "tasaRecuperacion": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0", "max": "1"}),

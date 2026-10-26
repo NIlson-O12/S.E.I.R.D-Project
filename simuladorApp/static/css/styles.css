@@ -10,13 +10,13 @@ header {
 }
 
 .header-title {
-    background-color: #7ab186 ;
+    background-color: #f8f8f6 ;
     border-radius: 10px;
     padding: 30px;
 }
 
 .navbar {
-    background-color: #7ab186; /* Fondo oscuro para la navbar */
+    background-color: #00674F; /* Fondo oscuro para la navbar */
     padding: 5px;
 }
 

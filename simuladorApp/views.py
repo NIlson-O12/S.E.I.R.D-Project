@@ -16,7 +16,7 @@ def simulador(request):
     if request.method == "POST":
         form = ParametrosSimulacionForm(request.POST)
         if form.is_valid():
-            tasa_infeccion = form.cleaned_data["tasaInfeccion"]
+            tasa_infeccion = form.cleaned_data["TasaInfeccion"]
             tasa_recuperacion = form.cleaned_data["tasaRecuperacion"]
             tasa_mortalidad = form.cleaned_data["tasaMortalidad"]
             duracion_enfermedad = form.cleaned_data["duracionPromedioEnfermedad"]

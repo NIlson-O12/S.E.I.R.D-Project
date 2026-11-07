@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.contrib.auth.models import User
 from django.urls import reverse
 
 from .forms import ParametrosSimulacionForm
@@ -47,6 +48,8 @@ class VistaSimuladorTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_post_simulador_renderiza_resultados(self):
+        usuario = User.objects.create_user(username="estudiante_test", password="PruebaSegura123!")
+        self.client.force_login(usuario)
         response = self.client.post(
             reverse("simulador"),
             data={
@@ -61,3 +64,21 @@ class VistaSimuladorTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Resultados de la Simulación")
+
+
+class AutenticacionTests(TestCase):
+    def test_simulador_requiere_inicio_de_sesion(self):
+        response = self.client.get(reverse("simulador"))
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('simulador')}")
+
+    def test_registro_crea_usuario_no_administrador(self):
+        response = self.client.post(reverse("registro"), data={
+            "username": "alumno_nuevo",
+            "email": "alumno@example.com",
+            "password1": "UnaClaveSegura123!",
+            "password2": "UnaClaveSegura123!",
+        })
+        self.assertRedirects(response, reverse("simulador"))
+        usuario = User.objects.get(username="alumno_nuevo")
+        self.assertFalse(usuario.is_staff)
+        self.assertFalse(usuario.is_superuser)

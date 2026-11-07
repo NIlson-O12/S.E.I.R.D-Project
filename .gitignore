@@ -30,3 +30,11 @@ htmlcov/
 .vscode/
 .idea/
 .DS_Store
+
+# Llave maestra de Firebase
+firebase-key.json
+
+# Archivos temporales del sistema y editores de código
+.DS_Store
+.vscode/
+.idea/

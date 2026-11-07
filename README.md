@@ -1,7 +1,7 @@
 # Simulador de Ecosistema Epidemiológico (SEIRD)
 Proyecto Original : https://github.com/ThePacktur/SimuladorEcosistema
 
-Proyecto Realizado con Django y Firebase.
+Proyecto Realizado con Django y MYSQL Workbench.
 
 # Novedades
 En Proceso..

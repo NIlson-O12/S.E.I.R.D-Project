@@ -1,3 +1,3 @@
 django # Diseño
 matplotlib # Seguridad en servidores
-firebase-admin # Base de datos
+mysqlclient # Seguridad en servidores

@@ -1,20 +1,21 @@
 import base64
 import io
+import uuid  
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+
 from django.utils.text import slugify
-import uuid  
-
-
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.models import User
+from django.contrib.auth import login, authenticate, logout, get_user_model
 
 from .forms import ParametrosSimulacionForm, RegistroEstudianteForm, LoginEstudianteForm
 from .utilis import simular_seir
+from .decorators import rol_requerido
+
+User = get_user_model()
 
 
 def simulador(request):
@@ -129,26 +130,8 @@ def registro(request):
         form = RegistroEstudianteForm(request.POST)
         if form.is_valid():
             try:
-                email = form.cleaned_data.get("email")
-                nombre = form.cleaned_data.get("name")      
-                apellido = form.cleaned_data.get("lastname")  
-                password = form.cleaned_data.get("password11" if "password11" in form.cleaned_data else "password1")
+                user = form.save()
                 
-                base_username = f"{slugify(nombre)} {slugify(apellido)}".lower()[:140]
-                username_propuesto = base_username
-                
-                contador = 1
-                while User.objects.filter(username=username_propuesto).exists():
-                    username_propuesto = f"{base_username}{contador}"
-                    contador += 1
-                
-                user = User.objects.create_user(
-                    username=username_propuesto, 
-                    email=email, 
-                    password=password,
-                    first_name=nombre,    
-                    last_name=apellido   
-                )
                 login(request, user)
                 
                 messages.success(request, "Cuenta creada correctamente. Bienvenido/a.")
@@ -162,9 +145,10 @@ def registro(request):
 
 def login_usuario(request):
     if request.user.is_authenticated:
-        if request.user.groups.filter(name='Profesores').exists():
+        perfil = getattr(request.user, "perfilusuario", None)
+        if perfil and perfil.rol == 'profesor':
             return redirect("panel_profesor")  
-        return redirect("simulator")
+        return redirect("simulator")          
         
     if request.method == "POST":
         form = LoginEstudianteForm(request.POST)
@@ -179,11 +163,12 @@ def login_usuario(request):
                     if usuario_objeto.is_active:
                         login(request, usuario_objeto)
                         
-                        # --- CLAVE: Redirección según el Rol/Grupo ---
-                        if usuario_objeto.groups.filter(name='Profesores').exists():
-                            return redirect("simulator") 
+                        perfil = getattr(usuario_objeto, "perfilusuario", None)
+                        
+                        if perfil and perfil.rol == 'profesor':
+                            return redirect("panel_profesor") 
                         else:
-                            return redirect("simulator") 
+                            return redirect("simulator")    
                         
                     else:
                         form.add_error(None, "Esta cuenta se encuentra inactiva.")
@@ -198,9 +183,33 @@ def login_usuario(request):
     return render(request, "simuladorApp/login.html", {"form": form})
 
 
-
 def cerrar_sesion(request):
     if request.method == "POST":
         logout(request)
         return redirect("login")
     return redirect("simulator")
+
+def configuracion(request):
+    return render(request, 'simuladorApp/configuration.html')
+
+@rol_requerido('profesor', 'admin')
+def crear_escenario(request):
+    return render(request, 'simuladorApp/escenario_form.html')
+
+@rol_requerido('profesor', 'admin')
+def editar_escenario(request, id):
+    return render(request, 'simuladorApp/escenario_form.html')
+
+@rol_requerido('profesor', 'admin')
+def eliminar_escenario(request, id):
+    return redirect('panel_profesor')
+
+@rol_requerido('profesor', 'admin')
+def panel_profesor(request):
+    return render(request, 'simuladorApp/panel_profesor.html')
+
+@rol_requerido('profesor', 'admin') 
+def historial_simulaciones(request):
+    return render(request, 'simuladorApp/historial_simulaciones.html')
+
+

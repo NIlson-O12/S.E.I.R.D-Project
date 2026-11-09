@@ -1,12 +1,13 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
-from .models import ParametrosSimulacion
+from django.contrib.auth import login, authenticate, logout, get_user_model
+from django.apps import apps
 
+
+Usuario = get_user_model()
 
 class ParametrosSimulacionForm(forms.ModelForm):
     class Meta:
-        model = ParametrosSimulacion
+        model = apps.get_model('simuladorApp', 'ParametrosSimulacion')
         fields = [
             "tasaInfeccion",
             "tasaRecuperacion",
@@ -35,8 +36,6 @@ class ParametrosSimulacionForm(forms.ModelForm):
             "tiempoSimulacion": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
         }
 
-
-
     def _validar_tasa(self, campo, etiqueta):
         tasa = self.cleaned_data.get(campo)
         if tasa is None:
@@ -62,7 +61,7 @@ class ParametrosSimulacionForm(forms.ModelForm):
         dias = cleaned_data.get("tiempoSimulacion")
 
         if poblacion is not None and poblacion <= 0:
-            self.add_error("poblacion Inicial", "La población inicial debe ser mayor que cero.")
+            self.add_error("poblacionInicial", "La población inicial debe ser mayor que cero.")
 
         if infectados is not None and infectados <= 0:
             self.add_error("infectadosInicial", "Los infectados iniciales deben ser mayores que cero.")
@@ -88,22 +87,7 @@ class ParametrosSimulacionForm(forms.ModelForm):
         return cleaned_data
 
 
-    """El registro público crea únicamente cuentas de estudiante."""
-class RegistroEstudianteForm(forms.Form):
-    name = forms.CharField(
-        max_length=150, 
-        label="Nombre", 
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre"})
-    )
-    lastname = forms.CharField(
-        max_length=150, 
-        label="Apellido", 
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Apellido"})
-    )
-    email = forms.EmailField(
-        label="Correo electrónico", 
-        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "ejemplo@correo.com"})
-    )
+class RegistroEstudianteForm(forms.ModelForm):
     password1 = forms.CharField(
         label="Contraseña", 
         widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "********"})
@@ -112,6 +96,21 @@ class RegistroEstudianteForm(forms.Form):
         label="Confirmar contraseña", 
         widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "********"})
     )
+
+    class Meta:
+        model = Usuario  
+        fields = ['first_name', 'last_name', 'email']
+        widgets = {
+            'first_name': forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre"}),
+            'last_name': forms.TextInput(attrs={"class": "form-control", "placeholder": "Apellido"}),
+            'email': forms.EmailInput(attrs={"class": "form-control", "placeholder": "ejemplo@correo.com"}),
+        }
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if Usuario.objects.filter(email=email).exists():
+            raise forms.ValidationError("Este correo ya está registrado.")
+        return email
 
     def clean(self):
         cleaned_data = super().clean()
@@ -123,24 +122,31 @@ class RegistroEstudianteForm(forms.Form):
             
         return cleaned_data
 
+    def save(self, commit=True):
+        usuario = super().save(commit=False)
+        usuario.username = self.cleaned_data["email"]  
+        usuario.set_password(self.cleaned_data["password1"])
+        usuario.rol = 'estudiante'  
+        
+        if commit:
+            usuario.save()
+        return usuario
+
+
 class LoginEstudianteForm(forms.Form):
     email = forms.EmailField( 
         label="Correo electrónico",
         widget=forms.EmailInput(attrs={  
-            "class": "form-control; align-items: center; ",
+            "class": "form-control",
             "placeholder": "ejemplo@correo.com",
-            "style": "width: 50px; min-width: 300px; padding: 10px;" 
+            "style": "min-width: 300px; padding: 10px;" 
         })
     )
     password = forms.CharField(
         label="Contraseña",
         widget=forms.PasswordInput(attrs={
-            "class": "form-control; align-items: center; ",
+            "class": "form-control",
             "placeholder": "********",
-            "style": "width: 50px; min-width: 300px; padding: 10px;" 
+            "style": "min-width: 300px; padding: 10px;" 
         })
     )
-
-
-
-

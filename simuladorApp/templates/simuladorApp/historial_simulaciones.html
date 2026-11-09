@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://jsdelivr.net" rel="stylesheet">
+    <link href="{% static 'styles.css' %}" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{% static 'image/favicon_admin.ico' %}">
+    <link href="{% static '/css/styles.css' %}" rel="stylesheet">
+    <title>Historial de simulaciones</title>
+</head>
+<body class="container mt-5">
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Historial de simulaciones</h1>
+        <a class="btn btn-outline-primary" href="{% url 'simulator' %}">Volver al simulador</a>
+    </header>
+    
+    <p>Sesión: <strong>{{ request.user.username }}</strong> — {% if request.user.is_superuser or request.user.is_staff %}Docente-Administrador{% else %}Estudiante{% endif %}</p>
+    
+    {% if messages %}{% for message in messages %}<div class="alert alert-success">{{ message }}</div>{% endfor %}{% endif %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <!-- Modificado aquí: Columna visible solo para administradores -->
+                    {% if request.user.is_superuser or request.user.is_staff %}<th>Estudiante</th>{% endif %}
+                    <th>Fecha</th>
+                    <th>Población</th>
+                    <th>Infectados iniciales</th>
+                    <th>Duración (días)</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for simulacion in simulaciones %}
+                <tr>
+                    <td>{{ simulacion.id }}</td>
+                    {% if request.user.is_superuser or request.user.is_staff %}<td>{{ simulacion.usuario|default:"Usuario eliminado" }}</td>{% endif %}
+                    <td>{{ simulacion.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    <td>{{ simulacion.poblacionInicial }}</td>
+                    <td>{{ simulacion.infectadosInicial }}</td>
+                    <td>{{ simulacion.tiempoSimulacion }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center">Todavía no hay simulaciones registradas.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
